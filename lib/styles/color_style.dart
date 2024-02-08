@@ -20,7 +20,7 @@ class ColorStyle {
   static const primaryColor = Color(0xFF2E8B57);
   static const lightPrimaryColor = Color(0xFF61BC84);
   static const darkPrimaryColor = Color(0xFF345E37);
-  static const primaryTextColor = Color(0xFF474747);
+  //static const primaryTextColor = Color(0xFF474747);
   static const backgroundColor = Color(0xFF1E1E1E);
   static const secondaryBackgroundColor = Color(0xFF454545);
   static const textColor = Color(0xFFFFFFFF);
