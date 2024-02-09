@@ -22,6 +22,7 @@ class CustomTextField extends StatelessWidget {
   final FocusNode? focusNode;
   final TextStyle? hintStyle;
   final List<TextInputFormatter>? inputFormatters;
+  final Function? onChanged;
   const CustomTextField(
       {super.key,
       required this.controller,
@@ -42,7 +43,8 @@ class CustomTextField extends StatelessWidget {
       this.cursorColor = ColorStyle.whiteColor,
       this.customRadius,
       this.borderWidth = 1,
-      this.focusNode});
+      this.focusNode,
+      this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +58,11 @@ class CustomTextField extends StatelessWidget {
         maxLines: maxLines,
         autofocus: autofocus,
         cursorColor: cursorColor,
+        onChanged: (value) {
+          if (onChanged != null) {
+            onChanged!(value); // Call the onChanged function with the value
+          }
+        },
         style: TextStyle(color: textColor),
         decoration: InputDecoration(
           hintStyle:

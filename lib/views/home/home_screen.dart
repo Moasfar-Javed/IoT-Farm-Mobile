@@ -1,4 +1,6 @@
 import 'package:farm/styles/color_style.dart';
+import 'package:farm/widgets/bottom_sheets/add_crop_sheet.dart';
+import 'package:farm/widgets/bottom_sheets/pair_hardware_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
@@ -14,7 +16,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          _showAddCropFlow();
+        },
         child: const Icon(
           Icons.add,
           size: 30,
@@ -44,10 +48,76 @@ class _HomeScreenState extends State<HomeScreen> {
                     fontWeight: FontWeight.w700,
                     color: ColorStyle.textColor),
               ),
-              _buildEmptyCropsWidget(),
+              const SizedBox(height: 20),
+              //_buildEmptyCropsWidget(),
+              Expanded(
+                child: ListView.builder(
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: 5,
+                  itemBuilder: (context, index) => _buildCropTileWidget(index),
+                ),
+              ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  _showAddCropFlow() async {
+    Map<String, dynamic>? cropSettings = await showModalBottomSheet(
+      useRootNavigator: true,
+      isScrollControlled: true,
+      useSafeArea: true,
+      context: context,
+      builder: (BuildContext ctx) {
+        return const AddCropSheet();
+      },
+    );
+
+    if (cropSettings != null && mounted) {
+      Future.delayed(const Duration(milliseconds: 500)).then((value) async {
+        bool? isPaired = await showModalBottomSheet(
+          useRootNavigator: true,
+          isScrollControlled: true,
+          useSafeArea: true,
+          context: context,
+          builder: (BuildContext ctx) {
+            return const PairHardwareSheet();
+          },
+        );
+      });
+    }
+  }
+
+  _buildCropTileWidget(int index) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      decoration: const BoxDecoration(
+        color: ColorStyle.secondaryBackgroundColor,
+        border:
+            Border(left: BorderSide(color: ColorStyle.primaryColor, width: 6)),
+        borderRadius: BorderRadius.horizontal(
+          right: Radius.circular(8),
+        ),
+      ),
+      child: const Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            "My potato crop",
+            style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: ColorStyle.textColor),
+          ),
+          Text("Healthy",
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: ColorStyle.lightPrimaryColor))
+        ],
       ),
     );
   }

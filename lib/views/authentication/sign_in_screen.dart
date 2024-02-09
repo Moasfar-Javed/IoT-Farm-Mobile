@@ -6,7 +6,6 @@ import 'package:farm/utility/loading_util.dart';
 import 'package:farm/utility/pref_util.dart';
 import 'package:farm/utility/toast_util.dart';
 import 'package:farm/widgets/custom_rounded_button.dart';
-import 'package:farm/widgets/custom_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
@@ -289,12 +288,12 @@ class _SignInScreenState extends State<SignInScreen> {
                         child: Text(
                           "Sign In with $title",
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                               color: ColorStyle.blackColor,
                               fontWeight: FontWeight.w600),
                         ),
                       ),
-                      SizedBox(
+                      const SizedBox(
                         height: 30,
                         width: 30,
                       ),
