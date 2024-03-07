@@ -1,14 +1,18 @@
 import 'dart:async';
 
 import 'package:farm/keys/route_keys.dart';
+import 'package:farm/models/api/user/user_details.dart';
+import 'package:farm/models/api/user/user_response.dart';
 import 'package:farm/models/screen_args/verify_code_screen_args.dart';
+import 'package:farm/services/user_service.dart';
 import 'package:farm/styles/color_style.dart';
 import 'package:farm/utility/auth_util.dart';
 import 'package:farm/utility/loading_util.dart';
 import 'package:farm/utility/pref_util.dart';
 import 'package:farm/utility/toast_util.dart';
-import 'package:farm/widgets/custom_rounded_button.dart';
+import 'package:farm/widgets/buttons/custom_rounded_button.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:pinput/pinput.dart';
@@ -30,6 +34,8 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
   int _countdown = 120;
 
   bool isLoadingVerifyButton = false;
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  UserService userService = UserService();
 
   @override
   void initState() {
@@ -90,11 +96,12 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
       }
       return null;
     });
-    setState(() {
-      isLoadingVerifyButton = false;
-    });
+
     if (userCredential != null) {
-      print(userCredential.user!.uid);
+      String emailOrPhone = userCredential.user!.email != null
+          ? userCredential.user!.email!
+          : userCredential.user!.phoneNumber!;
+      _signInToServer(userCredential.user!.uid, emailOrPhone);
     }
   }
 
@@ -102,7 +109,10 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
     await AuthUtil.verifyPhoneNumber(widget.arguments.phoneNumber,
         (userCredential) {
       if (userCredential != null) {
-        _moveToHome(userCredential.user!.uid);
+        String emailOrPhone = userCredential.user!.email != null
+            ? userCredential.user!.email!
+            : userCredential.user!.phoneNumber!;
+        _signInToServer(userCredential.user!.uid, emailOrPhone);
       }
     }, (errorCode) {
       switch (errorCode) {
@@ -144,10 +154,42 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
     );
   }
 
-  _moveToHome(String uid) {
-    PrefUtil().setUserId = uid;
-    PrefUtil().setUserLoggedIn = true;
+  _moveToHome() {
     Navigator.of(context).pushNamedAndRemoveUntil(homeRoute, (route) => false);
+  }
+
+  Future<String?> _getFcmToken() async {
+    await _firebaseMessaging.requestPermission();
+    return await _firebaseMessaging.getToken();
+  }
+
+  _signInToServer(String uid, String emailOrNumber) async {
+    String? token = await _getFcmToken();
+    userService.signInUser(uid, emailOrNumber, token).then((value) {
+      setState(() {
+        isLoadingVerifyButton = false;
+      });
+      if (value.error == null) {
+        UserResponse userResponse = value.snapshot;
+        if (userResponse.success ?? false) {
+          UserDetails user = userResponse.data!.user!;
+          _saveUserData(user);
+          _moveToHome();
+        } else {
+          ToastUtil.showToast(userResponse.message ?? "");
+        }
+      } else {
+        ToastUtil.showToast(value.error ?? "");
+      }
+    });
+  }
+
+  _saveUserData(UserDetails user) {
+    PrefUtil().setUserId = user.fireUid ?? "";
+    PrefUtil().setUserToken = user.authToken ?? "";
+    PrefUtil().setUserPhoneOrEmail = user.phoneOrEmail ?? "";
+    PrefUtil().setUserRole = user.role ?? "";
+    PrefUtil().setUserLoggedIn = true;
   }
 
   @override

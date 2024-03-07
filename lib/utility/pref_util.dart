@@ -23,4 +23,23 @@ class PrefUtil {
   set setUserId(String value) {
     _sharedPreferences!.setString(userId, value);
   }
+
+  String get getUserToken => _sharedPreferences!.getString(token) ?? "";
+
+  set setUserToken(String value) {
+    _sharedPreferences!.setString(token, value);
+  }
+
+  String get getUserPhoneOrEmail =>
+      _sharedPreferences!.getString(emailOrPhone) ?? "";
+
+  set setUserPhoneOrEmail(String value) {
+    _sharedPreferences!.setString(emailOrPhone, value);
+  }
+
+  String get getUserRole => _sharedPreferences!.getString(role) ?? "";
+
+  set setUserRole(String value) {
+    _sharedPreferences!.setString(role, value);
+  }
 }

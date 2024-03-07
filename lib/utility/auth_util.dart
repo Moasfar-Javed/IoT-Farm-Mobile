@@ -46,7 +46,7 @@ class AuthUtil {
       await firebaseAuth.verifyPhoneNumber(
         phoneNumber: phoneNumber,
         forceResendingToken: resendToken,
-        timeout: Duration(minutes: 2),
+        timeout: const Duration(minutes: 2),
         verificationCompleted: (PhoneAuthCredential credential) async {
           UserCredential userCredential =
               await firebaseAuth.signInWithCredential(credential);

@@ -1,11 +1,15 @@
 import 'package:farm/keys/route_keys.dart';
+import 'package:farm/models/api/user/user_details.dart';
+import 'package:farm/models/api/user/user_response.dart';
 import 'package:farm/models/screen_args/verify_code_screen_args.dart';
+import 'package:farm/services/user_service.dart';
 import 'package:farm/styles/color_style.dart';
 import 'package:farm/utility/auth_util.dart';
 import 'package:farm/utility/loading_util.dart';
 import 'package:farm/utility/pref_util.dart';
 import 'package:farm/utility/toast_util.dart';
-import 'package:farm/widgets/custom_rounded_button.dart';
+import 'package:farm/widgets/buttons/custom_rounded_button.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
@@ -20,13 +24,18 @@ class SignInScreen extends StatefulWidget {
 class _SignInScreenState extends State<SignInScreen> {
   final TextEditingController _phoneController = TextEditingController();
   bool isPhoneInputValid = false;
-
   String initialCountry = 'PK';
   PhoneNumber _phoneNumber = PhoneNumber(isoCode: 'PK');
-
   bool isLoadingPhoneButton = false;
   bool isLoadingGoogleButton = false;
   bool isLoadingFacebookButton = false;
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  UserService userService = UserService();
+
+  Future<String?> _getFcmToken() async {
+    await _firebaseMessaging.requestPermission();
+    return await _firebaseMessaging.getToken();
+  }
 
   _signInWithPhone() async {
     if (_phoneNumber.phoneNumber != null) {
@@ -36,11 +45,10 @@ class _SignInScreenState extends State<SignInScreen> {
       await AuthUtil.verifyPhoneNumber(_phoneNumber.phoneNumber!,
           (userCredential) {
         if (userCredential != null) {
-          setState(() {
-            isLoadingPhoneButton = false;
-          });
-
-          _moveToHome(userCredential.user!.uid);
+          String emailOrPhone = userCredential.user!.email != null
+              ? userCredential.user!.email!
+              : userCredential.user!.phoneNumber!;
+          _signInToServer(userCredential.user!.uid, emailOrPhone);
         }
       }, (errorCode) {
         setState(() {
@@ -78,10 +86,39 @@ class _SignInScreenState extends State<SignInScreen> {
     }
   }
 
-  _moveToHome(String uid) {
-    PrefUtil().setUserId = uid;
-    PrefUtil().setUserLoggedIn = true;
+  _moveToHome() {
     Navigator.of(context).pushNamedAndRemoveUntil(homeRoute, (route) => false);
+  }
+
+  _signInToServer(String uid, String emailOrNumber) async {
+    String? token = await _getFcmToken();
+    userService.signInUser(uid, emailOrNumber, token).then((value) {
+      setState(() {
+        isLoadingFacebookButton = false;
+        isLoadingGoogleButton = false;
+        isLoadingPhoneButton = false;
+      });
+      if (value.error == null) {
+        UserResponse userResponse = value.snapshot;
+        if (userResponse.success ?? false) {
+          UserDetails user = userResponse.data!.user!;
+          _saveUserData(user);
+          _moveToHome();
+        } else {
+          ToastUtil.showToast(userResponse.message ?? "");
+        }
+      } else {
+        ToastUtil.showToast(value.error ?? "");
+      }
+    });
+  }
+
+  _saveUserData(UserDetails user) {
+    PrefUtil().setUserId = user.fireUid ?? "";
+    PrefUtil().setUserToken = user.authToken ?? "";
+    PrefUtil().setUserPhoneOrEmail = user.phoneOrEmail ?? "";
+    PrefUtil().setUserRole = user.role ?? "";
+    PrefUtil().setUserLoggedIn = true;
   }
 
   @override
@@ -229,12 +266,14 @@ class _SignInScreenState extends State<SignInScreen> {
                         setState(() {
                           isLoadingGoogleButton = true;
                         });
-                        AuthUtil.signInWithGoogle().then((value) {
-                          setState(() {
-                            isLoadingGoogleButton = false;
-                          });
-                          if (value != null) {
-                            _moveToHome(value.user!.uid);
+                        AuthUtil.signInWithGoogle().then((userCredential) {
+                          if (userCredential != null) {
+                            String emailOrPhone =
+                                userCredential.user!.email != null
+                                    ? userCredential.user!.email!
+                                    : userCredential.user!.phoneNumber!;
+                            _signInToServer(
+                                userCredential.user!.uid, emailOrPhone);
                           }
                         });
                       }),
@@ -242,12 +281,14 @@ class _SignInScreenState extends State<SignInScreen> {
                         setState(() {
                           isLoadingFacebookButton = true;
                         });
-                        AuthUtil.signInWithFacebook().then((value) {
-                          setState(() {
-                            isLoadingFacebookButton = false;
-                          });
-                          if (value != null) {
-                            _moveToHome(value.user!.uid);
+                        AuthUtil.signInWithFacebook().then((userCredential) {
+                          if (userCredential != null) {
+                            String emailOrPhone =
+                                userCredential.user!.email != null
+                                    ? userCredential.user!.email!
+                                    : userCredential.user!.phoneNumber!;
+                            _signInToServer(
+                                userCredential.user!.uid, emailOrPhone);
                           }
                         });
                       }),

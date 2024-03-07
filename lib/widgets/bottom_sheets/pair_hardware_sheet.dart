@@ -1,10 +1,7 @@
 import 'package:farm/styles/color_style.dart';
-import 'package:farm/utility/toast_util.dart';
-import 'package:farm/widgets/custom_rounded_button.dart';
-import 'package:farm/widgets/custom_text_field.dart';
+import 'package:farm/widgets/buttons/custom_rounded_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:flutter_switch/flutter_switch.dart';
 
 class PairHardwareSheet extends StatefulWidget {
   const PairHardwareSheet({super.key});

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 class LoadingUtil {
   static showInButtonLoader() {
-    return SizedBox(
+    return const SizedBox(
       width: 20,
       height: 20,
       child: CircularProgressIndicator(

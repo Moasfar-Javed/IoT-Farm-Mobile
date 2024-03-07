@@ -6,7 +6,8 @@ class ToastUtil {
   static void showToast(String msg) {
     Fluttertoast.showToast(
         msg: msg,
-        toastLength: Toast.LENGTH_LONG,
+        //toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.TOP,
         timeInSecForIosWeb: 1,
         backgroundColor: ColorStyle.primaryMaterialColor[200],
         textColor: Colors.white,
@@ -39,7 +40,7 @@ class ToastUtil {
                   )),
               actions: [
                 TextButton(
-                  child: Text("Cancel",
+                  child: const Text("Cancel",
                       style: TextStyle(
                         color: ColorStyle.primaryColor,
                         fontFamily: "ClassicSans",
@@ -49,7 +50,7 @@ class ToastUtil {
                   },
                 ),
                 TextButton(
-                  child: Text("OK",
+                  child: const Text("OK",
                       style: TextStyle(
                         color: ColorStyle.primaryColor,
                         fontFamily: "ProductSans",
