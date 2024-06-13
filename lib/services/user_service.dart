@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:farm/keys/api_keys.dart';
 import 'package:farm/models/api/base/base_response.dart';
 import 'package:farm/models/api/generic/generic_response.dart';
+import 'package:farm/models/api/notification/list/notification_list_response.dart';
 import 'package:farm/models/api/user/user_response.dart';
 import 'package:farm/utility/pref_util.dart';
 import 'package:http/http.dart' as http;
@@ -68,6 +69,26 @@ class UserService {
         var responseBody = json.decode(response.body);
         final GenericResponse apiResponse =
             GenericResponse.fromJson(responseBody);
+        return BaseResponse(apiResponse, null);
+      } else {
+        return BaseResponse(null, response.body);
+      }
+    } catch (ex) {
+      return BaseResponse(null, ex.toString());
+    }
+  }
+
+  Future<BaseResponse> getNotificationList() async {
+    try {
+      var url = Uri.parse(ApiKeys.getNotification);
+
+      http.Response response = await http.get(url,
+          headers: {"Authorization": "Bearer ${PrefUtil().getUserToken}"});
+
+      if (response.statusCode == 200) {
+        var responseBody = json.decode(response.body);
+        final NotificationListResponse apiResponse =
+            NotificationListResponse.fromJson(responseBody);
         return BaseResponse(apiResponse, null);
       } else {
         return BaseResponse(null, response.body);

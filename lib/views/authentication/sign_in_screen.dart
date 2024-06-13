@@ -54,6 +54,7 @@ class _SignInScreenState extends State<SignInScreen> {
         setState(() {
           isLoadingPhoneButton = false;
         });
+        print(errorCode);
         switch (errorCode) {
           case "invalid-verification-code":
             ToastUtil.showToast("Please enter a valid code");
@@ -72,16 +73,19 @@ class _SignInScreenState extends State<SignInScreen> {
         setState(() {
           isLoadingPhoneButton = false;
         });
-        Navigator.of(context).pushNamed(verifyCodeRoute,
-            arguments: VerifyCodeScreenArgs(
-                phoneNumber: _phoneNumber.phoneNumber ?? "",
-                verificationId: verificationId,
-                resendToken: resendToken));
+        Navigator.of(context).pushNamed(
+          verifyCodeRoute,
+          arguments: VerifyCodeScreenArgs(
+            phoneNumber: _phoneNumber.phoneNumber ?? "",
+            verificationId: verificationId,
+            resendToken: resendToken,
+          ),
+        );
       }, (verificationId) {
         setState(() {
           isLoadingPhoneButton = false;
         });
-        // ToastUtil.showToast("Your request timed out, please try again later");
+        ToastUtil.showToast("Your request timed out, please try again later");
       });
     }
   }
@@ -141,7 +145,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 margin: const EdgeInsets.all(20),
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: ColorStyle.secondaryBackgroundColor,
+                  color: ColorStyle.backgroundColor,
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: [
                     BoxShadow(
@@ -189,7 +193,7 @@ class _SignInScreenState extends State<SignInScreen> {
                           ),
                           spaceBetweenSelectorAndTextField: 0,
                           ignoreBlank: false,
-                          cursorColor: ColorStyle.whiteColor,
+                          cursorColor: ColorStyle.primaryColor,
                           textStyle:
                               const TextStyle(color: ColorStyle.textColor),
                           selectorTextStyle:
@@ -222,12 +226,11 @@ class _SignInScreenState extends State<SignInScreen> {
                               : null,
                           borderColor: ColorStyle.whiteColor,
                           buttonBackgroundColor: isPhoneInputValid
-                              ? ColorStyle.whiteColor
-                              : Colors.transparent,
-                          textColor: isPhoneInputValid
-                              ? ColorStyle.blackColor
-                              : ColorStyle.whiteColor,
-                          waterColor: Colors.black12,
+                              ? ColorStyle.secondaryPrimaryColor
+                              : ColorStyle.secondaryPrimaryColor
+                                  .withOpacity(0.3),
+                          textColor: ColorStyle.whiteColor,
+                          waterColor: ColorStyle.primaryColor,
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -330,7 +333,7 @@ class _SignInScreenState extends State<SignInScreen> {
                           "Sign In with $title",
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                              color: ColorStyle.blackColor,
+                              color: ColorStyle.whiteColor,
                               fontWeight: FontWeight.w600),
                         ),
                       ),
@@ -344,9 +347,9 @@ class _SignInScreenState extends State<SignInScreen> {
           () {
             onTap();
           },
-          borderColor: ColorStyle.whiteColor,
-          buttonBackgroundColor: ColorStyle.whiteColor,
-          waterColor: Colors.black12,
+          borderColor: ColorStyle.primaryColor,
+          buttonBackgroundColor: ColorStyle.secondaryPrimaryColor,
+          waterColor: ColorStyle.primaryColor,
         ),
       ),
     );

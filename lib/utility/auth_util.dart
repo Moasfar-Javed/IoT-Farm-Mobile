@@ -54,6 +54,7 @@ class AuthUtil {
         },
         verificationFailed: (FirebaseAuthException e) {
           onFirebaseError(e.code);
+          print(e);
         },
         codeSent: (String verificationId, int? resendToken) {
           // _verificationId = verificationId;

@@ -21,6 +21,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   initState() {
+    print(PrefUtil().getUserToken);
     _moveToFullScreen();
     _moveToNextScreen();
     super.initState();

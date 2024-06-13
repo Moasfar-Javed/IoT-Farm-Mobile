@@ -20,11 +20,12 @@ class ColorStyle {
   static const primaryColor = Color(0xFF2E8B57);
   static const lightPrimaryColor = Color(0xFF61BC84);
   static const darkPrimaryColor = Color(0xFF345E37);
-  //static const primaryTextColor = Color(0xFF474747);
-  static const backgroundColor = Color(0xFF1E1E1E);
-  static const secondaryBackgroundColor = Color(0xFF454545);
-  static const textColor = Color(0xFFFFFFFF);
-  static const lightTextColor = Color(0xFFE0E0E0);
+  static const alertColor = Color.fromARGB(255, 171, 194, 72);
+  static const backgroundColor = Color(0xFFFFFFFF);
+  static const secondaryBackgroundColor = Color(0xFFFFFFFF);
+  static const secondaryPrimaryColor = Color.fromARGB(255, 78, 77, 77);
+  static const textColor = Color(0xFF000000);
+  static const lightTextColor = Color(0xFF000000);
   static const whiteColor = Color(0xFFFFFFFF);
   static const blackColor = Color(0xFF000000);
 }

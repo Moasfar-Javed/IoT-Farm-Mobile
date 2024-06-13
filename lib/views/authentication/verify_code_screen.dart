@@ -65,7 +65,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
       height: 1,
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: const Color.fromRGBO(137, 146, 160, 1),
+        color: ColorStyle.whiteColor,
         borderRadius: BorderRadius.circular(8),
       ),
     ),
@@ -275,15 +275,16 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                         autofocus: true,
                         defaultPinTheme: defaultPinTheme.copyWith(
                             decoration: BoxDecoration(
-                          color: ColorStyle.backgroundColor.withOpacity(0.3),
+                          color:
+                              ColorStyle.secondaryPrimaryColor.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(300),
                         )),
                         androidSmsAutofillMethod:
                             AndroidSmsAutofillMethod.smsRetrieverApi,
                         focusedPinTheme: defaultPinTheme.copyWith(
                             decoration: BoxDecoration(
-                              color:
-                                  ColorStyle.backgroundColor.withOpacity(0.6),
+                              color: ColorStyle.secondaryPrimaryColor
+                                  .withOpacity(0.6),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             textStyle: const TextStyle(

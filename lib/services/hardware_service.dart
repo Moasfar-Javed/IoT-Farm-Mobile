@@ -16,6 +16,9 @@ class HardwareService {
         // "content-type": "application/json"
       });
 
+      print(url);
+      print(response.body);
+
       if (response.statusCode == 200) {
         var responseBody = json.decode(response.body);
         final AssociateHardwareResponse apiResponse =

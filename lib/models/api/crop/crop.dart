@@ -1,69 +1,75 @@
 import 'package:farm/models/api/hardware/hardware.dart';
 
 class Crop {
-  String? title;
-  String? preferredReleaseDuration;
-  String? preferredReleaseTime;
-  bool? automaticIrrigation;
-  bool? maintainLogs;
-  bool? hardwarePaired;
-  String? cropHealthStatus;
-  DateTime? createdOn;
-  DateTime? deletedOn;
-  String? nextIrrigation;
-  String? optimalIrrigationTime;
-  String? releaseDuration;
+  final String? id;
+  final String? userId;
+  final String? title;
+  final String? type;
+  final DateTime? preferredReleaseTime;
+  final bool? automaticIrrigation;
+  final bool? maintainLogs;
+  final dynamic cropHealthStatus;
+  final double? latitude;
+  final double? longitude;
+  final DateTime? createdOn;
+  final dynamic lastAnalyzedOn;
+  final dynamic deletedOn;
   Hardware? hardware;
 
   Crop({
+    this.id,
+    this.userId,
     this.title,
-    this.preferredReleaseDuration,
+    this.type,
     this.preferredReleaseTime,
     this.automaticIrrigation,
     this.maintainLogs,
-    this.hardwarePaired,
     this.cropHealthStatus,
+    this.latitude,
+    this.longitude,
     this.createdOn,
+    this.lastAnalyzedOn,
     this.deletedOn,
-    this.nextIrrigation,
-    this.optimalIrrigationTime,
-    this.releaseDuration,
     this.hardware,
   });
 
   factory Crop.fromJson(Map<String, dynamic> json) => Crop(
+        id: json["_id"],
+        userId: json["user_id"],
         title: json["title"],
-        preferredReleaseDuration: json["preferred_release_duration"],
-        preferredReleaseTime: json["preferred_release_time"],
+        type: json["type"],
+        preferredReleaseTime: json["preferred_release_time"] == null
+            ? null
+            : DateTime.parse(json["preferred_release_time"]),
         automaticIrrigation: json["automatic_irrigation"],
         maintainLogs: json["maintain_logs"],
-        hardwarePaired: json["hardware_paired"],
         cropHealthStatus: json["crop_health_status"],
+        latitude: json["latitude"]?.toDouble(),
+        longitude: json["longitude"]?.toDouble(),
         createdOn: json["created_on"] == null
             ? null
             : DateTime.parse(json["created_on"]),
+        lastAnalyzedOn: json["last_analyzed_on"],
         deletedOn: json["deleted_on"],
-        nextIrrigation: json["next_irrigation"],
-        optimalIrrigationTime: json["optimal_irrigation_time"],
-        releaseDuration: json["release_duration"],
         hardware: json["hardware"] == null
             ? null
             : Hardware.fromJson(json["hardware"]),
       );
 
   Map<String, dynamic> toJson() => {
+        "_id": id,
+        "user_id": userId,
         "title": title,
-        "preferred_release_duration": preferredReleaseDuration,
-        "preferred_release_time": preferredReleaseTime,
+        "type": type,
+        "preferred_release_time": preferredReleaseTime?.toIso8601String(),
         "automatic_irrigation": automaticIrrigation,
         "maintain_logs": maintainLogs,
-        "hardware_paired": hardwarePaired,
         "crop_health_status": cropHealthStatus,
+        "latitude": latitude,
+        "longitude": longitude,
         "created_on": createdOn?.toIso8601String(),
-        "deleted_on": deletedOn?.toIso8601String(),
-        "next_irrigation": nextIrrigation,
-        "optimal_irrigation_time": optimalIrrigationTime,
-        "release_duration": releaseDuration,
+        "last_analyzed_on": lastAnalyzedOn,
+        "deleted_on": deletedOn,
         "hardware": hardware?.toJson(),
       };
 }

@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'package:farm/firebase_options.dart';
 import 'package:farm/keys/route_keys.dart';
+import 'package:farm/models/event_bus/refresh_crops.dart';
 import 'package:farm/routes/navigator_routes.dart';
 import 'package:farm/styles/color_style.dart';
 import 'package:farm/utility/notification_util.dart';
 import 'package:farm/utility/pref_util.dart';
+import 'package:farm/views/crop/detail/crop_detail_screen.dart';
+import 'package:farm/views/home/home_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
@@ -53,10 +56,14 @@ class _MyAppState extends State<MyApp> {
 
     remoteMessageStream = FirebaseMessaging.onMessage.listen((event) {
       NotificationUtils.showNotification(event.data);
+      HomeScreen.eventBus.fire(RefreshCropsEvent());
+      CropDetailScreen.eventBus.fire(RefreshCropsEvent());
     });
 
     onMessageOpenedStream =
         FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      HomeScreen.eventBus.fire(RefreshCropsEvent());
+      CropDetailScreen.eventBus.fire(RefreshCropsEvent());
       NotificationUtils.showNotification(message.data);
       NotificationUtils.handleInitialMessage(message);
     });
@@ -85,7 +92,10 @@ class _MyAppState extends State<MyApp> {
         textTheme: const TextTheme(
           bodySmall: TextStyle(color: ColorStyle.lightTextColor),
           bodyMedium: TextStyle(color: ColorStyle.lightTextColor),
-        ), colorScheme: ColorScheme.fromSwatch(primarySwatch: ColorStyle.primaryMaterialColor).copyWith(background: ColorStyle.backgroundColor),
+        ),
+        colorScheme: ColorScheme.fromSwatch(
+                primarySwatch: ColorStyle.primaryMaterialColor)
+            .copyWith(background: ColorStyle.backgroundColor),
       ),
       initialRoute: initialRoute,
       onGenerateRoute: NavigatorRoutes.allRoutes,

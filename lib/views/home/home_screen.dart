@@ -1,10 +1,14 @@
 import 'package:adaptive_dialog/adaptive_dialog.dart';
+import 'package:event_bus/event_bus.dart';
 import 'package:farm/keys/route_keys.dart';
 import 'package:farm/models/api/crop/crop.dart';
 import 'package:farm/models/api/crop/list/crop_list_response.dart';
 import 'package:farm/models/api/hardware/add/associate_hardware_response.dart';
 import 'package:farm/models/api/hardware/hardware.dart';
+import 'package:farm/models/api/weather/hourly.dart';
 import 'package:farm/models/api/weather/weather.dart';
+import 'package:farm/models/event_bus/refresh_crops.dart';
+import 'package:farm/models/screen_args/crop_args.dart';
 import 'package:farm/services/crop_service.dart';
 import 'package:farm/services/hardware_service.dart';
 import 'package:farm/services/user_service.dart';
@@ -13,13 +17,17 @@ import 'package:farm/utility/loading_util.dart';
 import 'package:farm/utility/pref_util.dart';
 import 'package:farm/utility/toast_util.dart';
 import 'package:farm/widgets/bottom_sheets/add_crop_sheet.dart';
+import 'package:farm/widgets/bottom_sheets/view_notifications_sheet.dart';
 import 'package:farm/widgets/buttons/custom_rounded_button.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:intl/intl.dart';
 import 'package:pinput/pinput.dart';
 
 class HomeScreen extends StatefulWidget {
+  static final eventBus = EventBus();
   const HomeScreen({super.key});
 
   @override
@@ -39,28 +47,67 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Crop>? crops;
   final TextEditingController _codeController = TextEditingController();
   final focusNode = FocusNode();
+  Position? position;
 
   @override
   void initState() {
-    _getCropListWithWeather();
+    _determinePosition();
     super.initState();
+    HomeScreen.eventBus.on<RefreshCropsEvent>().listen(
+      (event) {
+        if (mounted) {
+          _getCropListWithWeather();
+        }
+      },
+    );
+  }
+
+  _determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      position = null;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied && mounted) {
+        position = null;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever && mounted) {
+      position = null;
+    }
+
+    position = await Geolocator.getCurrentPosition();
+    _getCropListWithWeather();
   }
 
   _getCropListWithWeather() async {
-    cropService.getCropListAndWeather().then((value) {
+    cropService
+        .getCropListAndWeather(position?.latitude, position?.longitude)
+        .then((value) {
       setState(() {
         showPageLoading = false;
       });
+      PrefUtil().setLastLatitude = position?.latitude ?? 0.0;
+      PrefUtil().setLastLongitude = position?.longitude ?? 0.0;
       if (value.error == null) {
         CropListResponse response = value.snapshot;
         if (response.success ?? false) {
-          weather = response.data!.weather;
-          crops = response.data!.crops;
+          weather = response.data?.weather;
+          crops = response.data?.crops;
         } else {
           ToastUtil.showToast(response.message ?? "");
+          print(response.message);
         }
       } else {
         ToastUtil.showToast(value.error ?? "");
+        print(value.error);
       }
     });
   }
@@ -126,6 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
           int index =
               crops!.indexWhere((element) => element.title == crop.title);
           crops![index].hardware = hardware;
+
           setState(() {});
           ToastUtil.showToast("Hardware kit paired successfully");
           Navigator.of(context).pop();
@@ -144,6 +192,18 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     });
+  }
+
+  _openNotifLogs() {
+    showModalBottomSheet(
+      useRootNavigator: true,
+      isScrollControlled: true,
+      useSafeArea: true,
+      context: context,
+      builder: (BuildContext ctx) {
+        return const ViewNotificationsSheet();
+      },
+    );
   }
 
   @override
@@ -184,8 +244,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       icon: const Icon(
                         Icons.notifications_outlined,
                       ),
-                      onPressed: () {},
-                      color: ColorStyle.lightTextColor,
+                      onPressed: () => _openNotifLogs(),
+                      color: ColorStyle.whiteColor,
                       visualDensity: VisualDensity.compact,
                     ),
                   ),
@@ -205,44 +265,59 @@ class _HomeScreenState extends State<HomeScreen> {
                               Icons.logout_outlined,
                             ),
                             onPressed: () => _signOutUser(),
-                            color: ColorStyle.lightTextColor,
+                            color: ColorStyle.whiteColor,
                             visualDensity: VisualDensity.compact,
                           ),
                   ),
                 ],
               ),
               const SizedBox(height: 30),
-              const Text(
-                "Today’s Weather",
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: ColorStyle.lightTextColor),
-              ),
-              const SizedBox(height: 20),
-              _buildWeatherWidget(),
-              const SizedBox(height: 30),
-              const Text(
-                "Your Crops",
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: ColorStyle.lightTextColor),
-              ),
-              const SizedBox(height: 20),
-              //_buildEmptyCropsWidget(),
               Expanded(
                 child: showPageLoading
                     ? const Center(
                         child: CircularProgressIndicator(),
                       )
-                    : ListView.builder(
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: crops!.length,
-                        itemBuilder: (context, index) =>
-                            _buildCropTileWidget(index),
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          weather == null
+                              ? Container()
+                              : Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      "Today’s Weather",
+                                      style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w600,
+                                          color: ColorStyle.lightTextColor),
+                                    ),
+                                    const SizedBox(height: 20),
+                                    _buildWeatherWidget(),
+                                  ],
+                                ),
+                          const SizedBox(height: 30),
+                          const Text(
+                            "Your Crops",
+                            style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: ColorStyle.lightTextColor),
+                          ),
+                          const SizedBox(height: 20),
+                          Expanded(
+                            child: crops!.isEmpty
+                                ? _buildEmptyCropsWidget()
+                                : ListView.builder(
+                                    physics: const BouncingScrollPhysics(),
+                                    itemCount: crops!.length,
+                                    itemBuilder: (context, index) =>
+                                        _buildCropTileWidget(index),
+                                  ),
+                          ),
+                        ],
                       ),
-              ),
+              )
             ],
           ),
         ),
@@ -289,18 +364,29 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: () {
         if (crops![index].hardware == null) {
           _pairHardwareDialog(crops![index]);
+        } else {
+          Navigator.of(context).pushNamed(
+            cropDetailsRoute,
+            arguments: CropArgs(cropName: crops![index].title!),
+          );
         }
       },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
         margin: const EdgeInsets.symmetric(vertical: 10),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: ColorStyle.secondaryBackgroundColor,
-          border: Border(
+          border: const Border(
               left: BorderSide(color: ColorStyle.primaryColor, width: 6)),
-          borderRadius: BorderRadius.horizontal(
+          borderRadius: const BorderRadius.horizontal(
             right: Radius.circular(8),
           ),
+          boxShadow: [
+            BoxShadow(
+                offset: const Offset(0, 4),
+                blurRadius: 10,
+                color: ColorStyle.blackColor.withOpacity(0.1))
+          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -312,11 +398,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   fontWeight: FontWeight.w500,
                   color: ColorStyle.textColor),
             ),
-            Text(crops![index].cropHealthStatus ?? "Undetermined",
+            Text(
+                (crops![index].hardware != null)
+                    ? crops![index].cropHealthStatus ?? "Undetermined"
+                    : "Hardware Unpaired",
                 style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: ColorStyle.lightPrimaryColor))
+                    color: ColorStyle.alertColor))
           ],
         ),
       ),
@@ -335,12 +424,11 @@ class _HomeScreenState extends State<HomeScreen> {
         const Padding(
           padding: EdgeInsets.all(20),
           child: Text(
-            "You currently have no crops added press here to add some",
+            "You currently have no crops added press \"+\" to add some and get started",
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, color: ColorStyle.lightTextColor),
           ),
         ),
-        SvgPicture.asset('assets/svgs/tutorial_arrow_image.svg'),
       ],
     );
   }
@@ -348,7 +436,7 @@ class _HomeScreenState extends State<HomeScreen> {
   _buildWeatherWidget() {
     return Container(
       width: double.maxFinite,
-      height: 150,
+      height: 155,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: ColorStyle.secondaryBackgroundColor,
@@ -367,9 +455,9 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                "21°\tSunny",
-                style: TextStyle(
+              Text(
+                "${weather?.current?.temperature2M?.round()}° ${_getWeatherDescription(weather!.current!.weatherCode!)}",
+                style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: ColorStyle.textColor),
@@ -380,23 +468,135 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: BoxDecoration(
                     color: ColorStyle.lightTextColor,
                     borderRadius: BorderRadius.circular(6)),
-                child: const Text(
-                  "10% Rain",
-                  style: TextStyle(
+                child: Text(
+                  (weather?.current?.precipitation?.round() == 0)
+                      ? "No Rain"
+                      : "${weather?.current?.precipitation?.round()}% Rain",
+                  style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: ColorStyle.backgroundColor),
                 ),
               )
             ],
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.maxFinite,
+            height: 80,
+            child: ListView.builder(
+                physics: const BouncingScrollPhysics(),
+                scrollDirection: Axis.horizontal,
+                itemCount: weather?.hourly?.length ?? 0,
+                itemBuilder: (context, index) =>
+                    _buildDayWeatherWidget(index, weather!.hourly![index])),
           )
         ],
       ),
     );
   }
 
-  _buildDayWeatherWidget() {
-    return Container();
+  _buildDayWeatherWidget(int index, Hourly data) {
+    return Container(
+      margin: EdgeInsets.only(left: index == 0 ? 0 : 10, right: 10),
+      child: Column(
+        children: [
+          Text(
+            DateFormat("ha").format(data.time!),
+            style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: ColorStyle.textColor),
+          ),
+          const SizedBox(
+            height: 5,
+          ),
+          SvgPicture.asset(
+            "assets/svgs/weather/${_getWeatherSVG(data.weatherCode!)}",
+            height: 30,
+            width: 30,
+          ),
+          const SizedBox(
+            height: 5,
+          ),
+          Text(
+            "${data.temperature2M?.round()}° (${data.precipitationProbability?.round()}%)",
+            style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: ColorStyle.textColor),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getWeatherDescription(int code) {
+    Map<int, String> weatherDescriptions = {
+      0: 'Clear',
+      1: 'Clear',
+      2: 'Partly cloudy',
+      3: 'Overcast',
+      45: 'Fog',
+      48: 'Fog',
+      51: 'Drizzle',
+      53: 'Drizzle',
+      55: 'Drizzle',
+      56: 'Drizzle',
+      57: 'Drizzle',
+      61: 'Slight rain',
+      63: 'Moderate rain',
+      65: 'Heavy rain',
+      66: 'Light rain',
+      67: 'Heavy rain',
+      71: 'Snow fall',
+      73: 'Snow fall',
+      75: 'Heavy snow fall',
+      77: 'Snow grains',
+      80: 'Slight rain showers',
+      81: 'Moderate rain showers',
+      82: 'Violent rain showers',
+      85: 'Slight snow showers',
+      86: 'Heavy snow showers',
+      95: 'Thunderstorm',
+      96: 'Thunderstorm with hail',
+      99: 'Thunderstorm with hail'
+    };
+
+    return weatherDescriptions[code] ?? 'Unknown weather code';
+  }
+
+  String _getWeatherSVG(int code) {
+    if (code == 1 || code == 2 || code == 3) {
+      return 'cloud.svg';
+    } else if (code == 45 || code == 48) {
+      return 'cloud.svg';
+    } else if (code == 51 ||
+        code == 53 ||
+        code == 55 ||
+        code == 56 ||
+        code == 57 ||
+        code == 61 ||
+        code == 63 ||
+        code == 65 ||
+        code == 66 ||
+        code == 67 ||
+        code == 80 ||
+        code == 81 ||
+        code == 82) {
+      return 'rain.svg';
+    } else if (code == 71 ||
+        code == 73 ||
+        code == 75 ||
+        code == 77 ||
+        code == 85 ||
+        code == 86) {
+      return 'snow.svg';
+    } else if (code == 95 || code == 96 || code == 99) {
+      return 'thunder.svg';
+    } else {
+      return 'sun.svg';
+    }
   }
 
   _pairHardwareDialog(Crop crop) {
@@ -443,16 +643,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 controller: _codeController,
                 focusNode: focusNode,
                 autofocus: true,
+                keyboardType: TextInputType.text,
                 defaultPinTheme: defaultPinTheme.copyWith(
                     decoration: BoxDecoration(
-                  color: ColorStyle.backgroundColor.withOpacity(0.3),
+                  color: ColorStyle.secondaryPrimaryColor.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(300),
                 )),
                 androidSmsAutofillMethod:
                     AndroidSmsAutofillMethod.smsRetrieverApi,
                 focusedPinTheme: defaultPinTheme.copyWith(
                     decoration: BoxDecoration(
-                      color: ColorStyle.backgroundColor.withOpacity(0.6),
+                      color: ColorStyle.secondaryPrimaryColor.withOpacity(0.6),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     textStyle: const TextStyle(
@@ -484,7 +685,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   setState(() {
                     isCodeInputValid = true;
                   });
-                  _associateHardware(crop, _codeController.text);
+                  //_associateHardware(crop, _codeController.text);
                 },
                 showCursor: true,
                 cursor: cursor,
@@ -505,14 +706,32 @@ class _HomeScreenState extends State<HomeScreen> {
                       widgetButton: isLoadingPairButton
                           ? LoadingUtil.showInButtonLoader()
                           : null,
+                      // borderColor: ColorStyle.whiteColor,
                       borderColor: ColorStyle.whiteColor,
                       buttonBackgroundColor: isCodeInputValid
-                          ? ColorStyle.whiteColor
-                          : Colors.transparent,
-                      textColor: isCodeInputValid
-                          ? ColorStyle.blackColor
-                          : ColorStyle.whiteColor,
-                      waterColor: Colors.black12,
+                          ? ColorStyle.secondaryPrimaryColor
+                          : ColorStyle.secondaryPrimaryColor.withOpacity(0.3),
+                      textColor: ColorStyle.whiteColor,
+                      waterColor: ColorStyle.primaryColor,
+                    )),
+              ),
+              const SizedBox(
+                height: 10,
+              ),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 10.0),
+                child: SizedBox(
+                    height: 55,
+                    width: double.maxFinite,
+                    child: CustomRoundedButton(
+                      "Maybe later",
+                      () {
+                        Navigator.of(context).pop();
+                      },
+                      borderColor: ColorStyle.secondaryPrimaryColor,
+                      buttonBackgroundColor: ColorStyle.whiteColor,
+                      textColor: ColorStyle.secondaryPrimaryColor,
+                      waterColor: ColorStyle.primaryColor,
                     )),
               )
             ],

@@ -42,4 +42,16 @@ class PrefUtil {
   set setUserRole(String value) {
     _sharedPreferences!.setString(role, value);
   }
+
+  double get getLastLatitude => _sharedPreferences!.getDouble(lat) ?? 0.0;
+
+  set setLastLatitude(double value) {
+    _sharedPreferences!.setDouble(lat, value);
+  }
+
+  double get getLastLongitude => _sharedPreferences!.getDouble(lng) ?? 0.0;
+
+  set setLastLongitude(double value) {
+    _sharedPreferences!.setDouble(lng, value);
+  }
 }
