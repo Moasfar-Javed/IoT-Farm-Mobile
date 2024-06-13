@@ -1,3 +1,4 @@
+import 'package:farm/main.dart';
 import 'package:farm/models/api/crop/add/add_crop_response.dart';
 import 'package:farm/models/api/crop/crop.dart';
 import 'package:farm/models/api/crop/types/crop_types_response.dart';
@@ -42,8 +43,8 @@ class _AddCropSheetState extends State<AddCropSheet> {
     _getCropTypes();
     if (crop != null) {
       _cropTitleController.text = crop?.title ?? "";
-      _releaseTimeController.text =
-          DateFormat('hh:mm a').format(crop!.preferredReleaseTime!);
+      _releaseTimeController.text = DateFormat('hh:mm a')
+          .format(toLocalTime(crop!.preferredReleaseTime!));
       _releaseTime = crop!.preferredReleaseTime!;
       selectedType = crop?.type ?? "";
       smartIrrigation = crop?.automaticIrrigation ?? false;
@@ -115,7 +116,6 @@ class _AddCropSheetState extends State<AddCropSheet> {
             Crop? addedCrop = response.data!.crop;
             Navigator.of(context).pop(addedCrop);
           } else {
-            
             ToastUtil.showToast(response.message ?? "");
           }
         } else {

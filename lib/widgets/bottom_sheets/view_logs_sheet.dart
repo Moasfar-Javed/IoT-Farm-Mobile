@@ -1,3 +1,4 @@
+import 'package:farm/main.dart';
 import 'package:farm/models/api/irrigation/irrigation.dart';
 import 'package:farm/models/api/reading/reading.dart';
 import 'package:farm/styles/color_style.dart';
@@ -276,7 +277,7 @@ class _ViewLogsSheetState extends State<ViewLogsSheet> {
                   "Value", "${readings![index].moisture!}%"),
               Text(
                 DateFormat('dd MMMM, yy - hh:mm a')
-                    .format(readings![index].createdOn!),
+                    .format(toLocalTime(readings![index].createdOn!)),
                 style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w400,
@@ -323,7 +324,7 @@ class _ViewLogsSheetState extends State<ViewLogsSheet> {
               ),
               Text(
                 DateFormat('dd MMMM, yy - hh:mm a')
-                    .format(irrigations![index].releasedOn!),
+                    .format(toLocalTime(irrigations![index].releasedOn!)),
                 style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w400,

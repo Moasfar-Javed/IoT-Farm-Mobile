@@ -1,3 +1,4 @@
+import 'package:farm/main.dart';
 import 'package:farm/models/api/notification/list/notification_list_response.dart';
 import 'package:farm/models/api/notification/notification.dart';
 import 'package:farm/services/user_service.dart';
@@ -169,7 +170,7 @@ class _ViewNotificationsSheetState extends State<ViewNotificationsSheet> {
               ),
               Text(
                 DateFormat('dd MMMM, yy - hh:mm a')
-                    .format(notifications[index].sentOn!),
+                    .format(toLocalTime(notifications[index].sentOn!)),
                 style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w400,

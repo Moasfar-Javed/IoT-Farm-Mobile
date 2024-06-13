@@ -37,17 +37,20 @@ class CropDetailResponse {
 
 class Data {
   final Crop? crop;
+  final bool? connection;
   final List<Reading>? readings;
   final List<Irrigation>? irrigations;
 
   Data({
     this.crop,
     this.readings,
+    this.connection,
     this.irrigations,
   });
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
         crop: json["crop"] == null ? null : Crop.fromJson(json["crop"]),
+        connection: json["connection"],
         readings: json["readings"] == null
             ? []
             : List<Reading>.from(
@@ -60,6 +63,7 @@ class Data {
 
   Map<String, dynamic> toJson() => {
         "crop": crop?.toJson(),
+        "connection": connection,
         "readings": readings == null
             ? []
             : List<dynamic>.from(readings!.map((x) => x.toJson())),

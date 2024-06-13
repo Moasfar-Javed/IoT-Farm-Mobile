@@ -1,3 +1,4 @@
+import 'package:farm/utility/toast_util.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -10,17 +11,23 @@ class AuthUtil {
   }
 
   static Future<UserCredential?> signInWithGoogle() async {
-    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-    if (googleUser != null) {
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-      return await firebaseAuth.signInWithCredential(credential);
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser != null) {
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+        return await firebaseAuth.signInWithCredential(credential);
+      }
+      return null;
+    } catch (e) {
+      ToastUtil.showToast(
+          "Please check your internet connection and try again");
+      return null;
     }
-    return null;
   }
 
   static Future<UserCredential?> signInWithFacebook() async {

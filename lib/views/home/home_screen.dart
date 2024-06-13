@@ -1,6 +1,7 @@
 import 'package:adaptive_dialog/adaptive_dialog.dart';
 import 'package:event_bus/event_bus.dart';
 import 'package:farm/keys/route_keys.dart';
+import 'package:farm/main.dart';
 import 'package:farm/models/api/crop/crop.dart';
 import 'package:farm/models/api/crop/list/crop_list_response.dart';
 import 'package:farm/models/api/hardware/add/associate_hardware_response.dart';
@@ -502,7 +503,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         children: [
           Text(
-            DateFormat("ha").format(data.time!),
+            DateFormat("ha").format(toLocalTime(data.time!)),
             style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,

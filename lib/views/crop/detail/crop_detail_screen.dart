@@ -1,5 +1,6 @@
 import 'package:adaptive_dialog/adaptive_dialog.dart';
 import 'package:event_bus/event_bus.dart';
+import 'package:farm/main.dart';
 import 'package:farm/models/api/crop/crop.dart';
 import 'package:farm/models/api/crop/detail/crop_detail_response.dart';
 import 'package:farm/models/api/generic/generic_response.dart';
@@ -39,6 +40,7 @@ class _CropDetailScreenState extends State<CropDetailScreen> {
   List<Irrigation> irrigations = [];
   List<Reading> readings = [];
   Crop? crop;
+  bool hardwareConnected = false;
   @override
   initState() {
     _getCropDetails();
@@ -78,6 +80,7 @@ class _CropDetailScreenState extends State<CropDetailScreen> {
           crop = response.data?.crop;
           readings = response.data?.readings ?? [];
           irrigations = response.data?.irrigations ?? [];
+          hardwareConnected = response.data?.connection ?? false;
         } else {
           ToastUtil.showToast(response.message ?? "");
           print(response.message);
@@ -188,31 +191,41 @@ class _CropDetailScreenState extends State<CropDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: showPageLoading
-            ? const Center(
-                child: CircularProgressIndicator(),
-              )
-            : Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 25),
-                      _buildHeaderWidget(),
-                      const SizedBox(height: 30),
-                      _buildHealthWidget(),
-                      const SizedBox(height: 30),
-                      _buildDetailsWidget(),
-                      const SizedBox(height: 30),
-                      _buildIrrigationWidget(),
-                      const SizedBox(height: 30),
-                      _buildMoistureWidget(),
-                      const SizedBox(height: 30),
-                    ],
-                  ),
-                ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15),
+          child: Column(
+            children: [
+              const SizedBox(height: 25),
+              _buildHeaderWidget(),
+              const SizedBox(height: 5),
+              Expanded(
+                child: showPageLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(),
+                      )
+                    : SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 10),
+                            _buildHealthWidget(),
+                            const SizedBox(height: 30),
+                            _buildConnectionWidget(),
+                            const SizedBox(height: 30),
+                            _buildDetailsWidget(),
+                            const SizedBox(height: 30),
+                            _buildIrrigationWidget(),
+                            const SizedBox(height: 30),
+                            _buildMoistureWidget(),
+                            const SizedBox(height: 30),
+                          ],
+                        ),
+                      ),
               ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -467,8 +480,10 @@ class _CropDetailScreenState extends State<CropDetailScreen> {
           const SizedBox(height: 10),
           Row(
             children: [
-              _buildDetailsCellWidget("Release Time",
-                  DateFormat("hh:mm a").format(crop!.preferredReleaseTime!)),
+              _buildDetailsCellWidget(
+                  "Release Time",
+                  DateFormat("hh:mm a")
+                      .format(toLocalTime(crop!.preferredReleaseTime!))),
               _buildDetailsCellWidget(
                   "Hardware ID",
                   crop?.hardware == null
@@ -511,6 +526,82 @@ class _CropDetailScreenState extends State<CropDetailScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  _buildConnectionWidget() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.maxFinite,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: ColorStyle.whiteColor,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                  offset: const Offset(0, 4),
+                  blurRadius: 10,
+                  color: ColorStyle.blackColor.withOpacity(0.1))
+            ],
+          ),
+          child: Row(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: SizedBox(
+                  height: 30,
+                  width: 30,
+                  child: SvgPicture.asset(
+                    "assets/svgs/wifi_image.svg",
+                    color: ColorStyle.primaryColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  "Hardware Status",
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: ColorStyle.primaryColor,
+                  ),
+                ),
+              ),
+              Text(
+                hardwareConnected ? "Connected" : "Offline",
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: ColorStyle.lightTextColor),
+              ),
+            ],
+          ),
+        ),
+        Visibility(
+          visible: !hardwareConnected,
+          child: Container(
+            margin: const EdgeInsets.only(top: 20),
+            width: double.maxFinite,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+                color: ColorStyle.lightPrimaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: ColorStyle.primaryColor, width: 2)),
+            child: const Text(
+              "The sensor may come online automatically, try refreshing the page",
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: ColorStyle.secondaryPrimaryColor),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -587,82 +678,131 @@ class _CropDetailScreenState extends State<CropDetailScreen> {
   }
 
   _buildHeaderWidget() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Ink(
-          decoration: const ShapeDecoration(
-            // color: ColorStyle.darkPrimaryColor,
-            shape: CircleBorder(),
-          ),
-          child: IconButton(
-            icon: const Icon(
-              Icons.arrow_back,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Ink(
+              decoration: const ShapeDecoration(
+                // color: ColorStyle.darkPrimaryColor,
+                shape: CircleBorder(),
+              ),
+              child: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back,
+                ),
+                onPressed: () => Navigator.of(context).pop(),
+                color: ColorStyle.secondaryPrimaryColor,
+                visualDensity: VisualDensity.compact,
+              ),
             ),
-            onPressed: () => Navigator.of(context).pop(),
-            color: ColorStyle.secondaryPrimaryColor,
-            visualDensity: VisualDensity.compact,
-          ),
-        ),
-        const SizedBox(width: 5),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 5),
-            child: Text(
-              widget.arguments.cropName,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: ColorStyle.lightTextColor),
+            const SizedBox(width: 5),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 5),
+                child: Text(
+                  widget.arguments.cropName,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: ColorStyle.lightTextColor),
+                ),
+              ),
             ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Ink(
-          decoration: const ShapeDecoration(
-            color: ColorStyle.darkPrimaryColor,
-            shape: CircleBorder(),
-          ),
-          child: IconButton(
-            icon: const Icon(
-              Icons.refresh_outlined,
+            const SizedBox(width: 10),
+            Ink(
+              decoration: const ShapeDecoration(
+                color: ColorStyle.darkPrimaryColor,
+                shape: CircleBorder(),
+              ),
+              child: IconButton(
+                icon: const Icon(
+                  Icons.edit_outlined,
+                ),
+                onPressed: () => _startCropEditFlow(),
+                color: ColorStyle.whiteColor,
+                visualDensity: VisualDensity.compact,
+              ),
             ),
-            onPressed: () => _getCropDetails(),
-            color: ColorStyle.whiteColor,
-            visualDensity: VisualDensity.compact,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Ink(
-          decoration: const ShapeDecoration(
-            color: ColorStyle.darkPrimaryColor,
-            shape: CircleBorder(),
-          ),
-          child: IconButton(
-            icon: const Icon(
-              Icons.edit_outlined,
+            const SizedBox(width: 10),
+            Ink(
+              decoration: const ShapeDecoration(
+                color: ColorStyle.darkPrimaryColor,
+                shape: CircleBorder(),
+              ),
+              child: IconButton(
+                icon: const Icon(
+                  Icons.delete_outline,
+                ),
+                onPressed: () => _deleteCrop(),
+                color: ColorStyle.whiteColor,
+                visualDensity: VisualDensity.compact,
+              ),
             ),
-            onPressed: () => _startCropEditFlow(),
-            color: ColorStyle.whiteColor,
-            visualDensity: VisualDensity.compact,
-          ),
+          ],
         ),
-        const SizedBox(width: 10),
-        Ink(
-          decoration: const ShapeDecoration(
-            color: ColorStyle.darkPrimaryColor,
-            shape: CircleBorder(),
-          ),
-          child: IconButton(
-            icon: const Icon(
-              Icons.delete_outline,
+        Row(
+          children: [
+            CustomRoundedButton(
+              "",
+              () => (),
+              roundedCorners: 18,
+              widgetButton: const Row(
+                children: [
+                  Icon(
+                    Icons.analytics_outlined,
+                    color: ColorStyle.whiteColor,
+                    size: 20,
+                  ),
+                  SizedBox(width: 5),
+                  Text(
+                    "Analytics",
+                    style: TextStyle(
+                        decoration: TextDecoration.underline,
+                        decorationStyle: TextDecorationStyle.double,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: ColorStyle.whiteColor),
+                  ),
+                ],
+              ),
+              buttonBackgroundColor: ColorStyle.primaryColor,
+              borderColor: ColorStyle.whiteColor,
+              waterColor: ColorStyle.lightPrimaryColor,
             ),
-            onPressed: () => _deleteCrop(),
-            color: ColorStyle.whiteColor,
-            visualDensity: VisualDensity.compact,
-          ),
-        ),
+            SizedBox(width: 10),
+            CustomRoundedButton(
+              "",
+              () => _getCropDetails(),
+              roundedCorners: 18,
+              widgetButton: const Row(
+                children: [
+                  Icon(
+                    Icons.refresh_outlined,
+                    color: ColorStyle.whiteColor,
+                    size: 20,
+                  ),
+                  SizedBox(width: 5),
+                  Text(
+                    "Refresh",
+                    style: TextStyle(
+                        decoration: TextDecoration.underline,
+                        decorationStyle: TextDecorationStyle.double,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: ColorStyle.whiteColor),
+                  ),
+                ],
+              ),
+              buttonBackgroundColor: ColorStyle.primaryColor,
+              borderColor: ColorStyle.whiteColor,
+              waterColor: ColorStyle.lightPrimaryColor,
+            ),
+          ],
+        )
       ],
     );
   }
@@ -670,8 +810,10 @@ class _CropDetailScreenState extends State<CropDetailScreen> {
   String _getNextReading() {
     if (readings.isNotEmpty) {
       return DateFormat('hh:mm a').format(
-        readings.first.createdOn!.add(
-          const Duration(hours: 1),
+        toLocalTime(
+          readings.first.createdOn!.add(
+            const Duration(hours: 1),
+          ),
         ),
       );
     } else {
@@ -681,7 +823,9 @@ class _CropDetailScreenState extends State<CropDetailScreen> {
 
   String _getLastReading() {
     if (readings.isNotEmpty) {
-      return DateFormat('hh:mm a').format(readings.first.createdOn!);
+      return DateFormat('hh:mm a').format(
+        toLocalTime(readings.first.createdOn!),
+      );
     } else {
       return "---";
     }
@@ -731,7 +875,8 @@ class _CropDetailScreenState extends State<CropDetailScreen> {
     if (irrigations.isEmpty) {
       return "---";
     } else {
-      return DateFormat("hh:mm a").format(irrigations.first.createdOn!);
+      return DateFormat("hh:mm a")
+          .format(toLocalTime(irrigations.first.createdOn!));
     }
   }
 
@@ -763,7 +908,7 @@ class _CropDetailScreenState extends State<CropDetailScreen> {
         }
       default:
         {
-          return "We need more data from your sensors to come in to evaluate the health status.\nExpected to be evaluated at the next ${DateFormat("hh:mm a").format(crop!.preferredReleaseTime!)}";
+          return "We need more data from your sensors to come in to evaluate the health status.\nExpected to be evaluated at the next ${DateFormat("hh:mm a").format(toLocalTime(crop!.preferredReleaseTime!))}";
         }
     }
   }

@@ -277,6 +277,10 @@ class _SignInScreenState extends State<SignInScreen> {
                                     : userCredential.user!.phoneNumber!;
                             _signInToServer(
                                 userCredential.user!.uid, emailOrPhone);
+                          } else {
+                            setState(() {
+                              isLoadingGoogleButton = false;
+                            });
                           }
                         });
                       }),

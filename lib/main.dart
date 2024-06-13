@@ -14,6 +14,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage? message) async {
@@ -25,10 +28,21 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage? message) async {
   }
 }
 
+Future<void> initializeTimeZones() async {
+  tz.initializeTimeZones();
+  final String timeZoneName = await FlutterTimezone.getLocalTimezone();
+
+  final tz.Location location = tz.getLocation(timeZoneName);
+
+  tz.setLocalLocation(location);
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   SystemChrome.setPreferredOrientations(
       [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
+  await initializeTimeZones();
   await PrefUtil().init();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -101,4 +115,21 @@ class _MyAppState extends State<MyApp> {
       onGenerateRoute: NavigatorRoutes.allRoutes,
     );
   }
+}
+
+DateTime toLocalTime(DateTime utcDateTime) {
+  final tz.TZDateTime utcTZDateTime = tz.TZDateTime.utc(
+    utcDateTime.year,
+    utcDateTime.month,
+    utcDateTime.day,
+    utcDateTime.hour,
+    utcDateTime.minute,
+    utcDateTime.second,
+    utcDateTime.millisecond,
+    utcDateTime.microsecond,
+  );
+
+  final tz.TZDateTime localDateTime = utcTZDateTime.toLocal();
+
+  return localDateTime;
 }
