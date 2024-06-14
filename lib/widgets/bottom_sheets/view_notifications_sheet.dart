@@ -153,7 +153,9 @@ class _ViewNotificationsSheetState extends State<ViewNotificationsSheet> {
               Icon(
                 notifications[index].payload?.action == "open_logs"
                     ? Icons.update
-                    : Icons.water,
+                    : notifications[index].payload?.action == "open_release"
+                        ? Icons.water
+                        : Icons.invert_colors_off,
                 color: ColorStyle.primaryColor,
                 size: 20,
               ),

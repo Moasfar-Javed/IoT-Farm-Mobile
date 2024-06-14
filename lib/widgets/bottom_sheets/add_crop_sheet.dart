@@ -101,7 +101,7 @@ class _AddCropSheetState extends State<AddCropSheet> {
         crop!.title!,
         _cropTitleController.text.trim(),
         selectedType,
-        _releaseTime!.toIso8601String(),
+        _releaseTime!.toUtc().toString(),
         smartIrrigation,
         maintainLogs,
       )
@@ -136,7 +136,7 @@ class _AddCropSheetState extends State<AddCropSheet> {
           .addCrop(
         _cropTitleController.text.trim(),
         selectedType,
-        _releaseTime!.toIso8601String(),
+        _releaseTime!.toUtc().toString(),
         smartIrrigation,
         maintainLogs,
         PrefUtil().getLastLatitude,
@@ -208,7 +208,7 @@ class _AddCropSheetState extends State<AddCropSheet> {
                                 crop != null
                                     ? "Edit Crop/Zone"
                                     : "Create Crop/Zone",
-                                style: TextStyle(
+                                style: const TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.w700,
                                     color: ColorStyle.textColor),

@@ -28,4 +28,7 @@ class ColorStyle {
   static const lightTextColor = Color(0xFF000000);
   static const whiteColor = Color(0xFFFFFFFF);
   static const blackColor = Color(0xFF000000);
+
+  static const warningColor = Color.fromARGB(255, 178, 193, 15);
+  static const errorColor = Color.fromARGB(255, 197, 58, 53);
 }

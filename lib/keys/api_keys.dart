@@ -14,8 +14,8 @@ class ApiKeys {
   static const String updateCrop = "$baseUrl/crop/update";
   static const String getCropDetail = "$baseUrl/crop/detail";
   static const String addManualRelease = "$baseUrl/irrigation/manual-release";
-  static const String getIrrigationsList = "$baseUrl/irrigation/list";
-  static const String getReadingsList = "$baseUrl/irrigation/list";
+  static const String getIrrigationsAnalytics = "$baseUrl/irrigation/analytics";
+  static const String getReadingsAnalytics = "$baseUrl/reading/analytics";
 
   //hardware
   static const String associateHardware = "$baseUrl/hardware/associate";

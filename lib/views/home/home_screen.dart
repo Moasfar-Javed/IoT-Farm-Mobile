@@ -347,15 +347,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
       Future.delayed(const Duration(milliseconds: 500)).then((value) async {
         _pairHardwareDialog(addedCrop);
-        // bool? isPaired = await showModalBottomSheet(
-        //   useRootNavigator: true,
-        //   isScrollControlled: true,
-        //   useSafeArea: true,
-        //   context: context,
-        //   builder: (BuildContext ctx) {
-        //     return const PairHardwareSheet();
-        //   },
-        // );
       });
     }
   }
@@ -400,17 +391,41 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: ColorStyle.textColor),
             ),
             Text(
-                (crops![index].hardware != null)
-                    ? crops![index].cropHealthStatus ?? "Undetermined"
-                    : "Hardware Unpaired",
-                style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: ColorStyle.alertColor))
+              (crops![index].hardware != null)
+                  ? capitalizeFirstLetter(
+                      crops![index].cropHealthStatus ?? "Undetermined")
+                  : "Hardware Unpaired",
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: (crops![index].hardware != null)
+                    ? _getColorByHealth(crops![index].cropHealthStatus)
+                    : ColorStyle.secondaryPrimaryColor,
+              ),
+            )
           ],
         ),
       ),
     );
+  }
+
+  String capitalizeFirstLetter(String input) {
+    if (input.isEmpty) {
+      return input;
+    }
+    return input[0].toUpperCase() + input.substring(1);
+  }
+
+  Color _getColorByHealth(String? health) {
+    if (health == "poor") {
+      return ColorStyle.errorColor;
+    } else if (health == "needs_attention") {
+      return ColorStyle.warningColor;
+    } else if (health == "healthy") {
+      return ColorStyle.primaryColor;
+    } else {
+      return ColorStyle.secondaryPrimaryColor;
+    }
   }
 
   _buildEmptyCropsWidget() {

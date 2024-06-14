@@ -14,6 +14,7 @@ import 'package:farm/utility/loading_util.dart';
 import 'package:farm/utility/toast_util.dart';
 import 'package:farm/views/home/home_screen.dart';
 import 'package:farm/widgets/bottom_sheets/add_crop_sheet.dart';
+import 'package:farm/widgets/bottom_sheets/analytics_sheet.dart';
 import 'package:farm/widgets/bottom_sheets/view_logs_sheet.dart';
 import 'package:farm/widgets/buttons/custom_rounded_button.dart';
 import 'package:farm/widgets/inputs/custom_text_field.dart';
@@ -41,6 +42,8 @@ class _CropDetailScreenState extends State<CropDetailScreen> {
   List<Reading> readings = [];
   Crop? crop;
   bool hardwareConnected = false;
+  DateTime lastRefreshed = DateTime.now();
+
   @override
   initState() {
     _getCropDetails();
@@ -81,6 +84,7 @@ class _CropDetailScreenState extends State<CropDetailScreen> {
           readings = response.data?.readings ?? [];
           irrigations = response.data?.irrigations ?? [];
           hardwareConnected = response.data?.connection ?? false;
+          lastRefreshed = DateTime.now();
         } else {
           ToastUtil.showToast(response.message ?? "");
           print(response.message);
@@ -185,6 +189,32 @@ class _CropDetailScreenState extends State<CropDetailScreen> {
         );
       },
     );
+  }
+
+  _openAnalytics() async {
+    showModalBottomSheet(
+      useRootNavigator: true,
+      isScrollControlled: true,
+      useSafeArea: true,
+      context: context,
+      builder: (BuildContext ctx) {
+        return AnalyticsSheet(
+          cropName: widget.arguments.cropName,
+        );
+      },
+    );
+  }
+
+  Color _getColorByHealth(String? health) {
+    if (health == "poor") {
+      return ColorStyle.errorColor;
+    } else if (health == "needs_attention") {
+      return ColorStyle.warningColor;
+    } else if (health == "healthy") {
+      return ColorStyle.primaryColor;
+    } else {
+      return ColorStyle.secondaryPrimaryColor;
+    }
   }
 
   @override
@@ -505,10 +535,11 @@ class _CropDetailScreenState extends State<CropDetailScreen> {
     );
   }
 
-  _buildDetailsCellWidget(String title, String value) {
+  _buildDetailsCellWidget(String title, String value, {bool alignEnd = false}) {
     return Expanded(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
           Text(
             title,
@@ -574,10 +605,12 @@ class _CropDetailScreenState extends State<CropDetailScreen> {
               Text(
                 hardwareConnected ? "Connected" : "Offline",
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: ColorStyle.lightTextColor),
+                    color: hardwareConnected
+                        ? ColorStyle.primaryColor
+                        : ColorStyle.warningColor),
               ),
             ],
           ),
@@ -589,9 +622,10 @@ class _CropDetailScreenState extends State<CropDetailScreen> {
             width: double.maxFinite,
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-                color: ColorStyle.lightPrimaryColor.withOpacity(0.1),
+                color: ColorStyle.secondaryPrimaryColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: ColorStyle.primaryColor, width: 2)),
+                border: Border.all(
+                    color: ColorStyle.secondaryPrimaryColor, width: 2)),
             child: const Text(
               "The sensor may come online automatically, try refreshing the page",
               style: TextStyle(
@@ -649,10 +683,10 @@ class _CropDetailScreenState extends State<CropDetailScreen> {
                     ? "Undermined"
                     : capitalizeFirstLetter(crop?.cropHealthStatus ?? ""),
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: ColorStyle.lightTextColor),
+                    color: _getColorByHealth(crop?.cropHealthStatus)),
               ),
             ],
           ),
@@ -662,9 +696,10 @@ class _CropDetailScreenState extends State<CropDetailScreen> {
           width: double.maxFinite,
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-              color: ColorStyle.lightPrimaryColor.withOpacity(0.1),
+              color: _getColorByHealth(crop?.cropHealthStatus).withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: ColorStyle.primaryColor, width: 2)),
+              border: Border.all(
+                  color: _getColorByHealth(crop?.cropHealthStatus), width: 2)),
           child: Text(
             _getMessageByHealth(),
             style: const TextStyle(
@@ -748,7 +783,7 @@ class _CropDetailScreenState extends State<CropDetailScreen> {
           children: [
             CustomRoundedButton(
               "",
-              () => (),
+              () => _openAnalytics(),
               roundedCorners: 18,
               widgetButton: const Row(
                 children: [
@@ -773,7 +808,7 @@ class _CropDetailScreenState extends State<CropDetailScreen> {
               borderColor: ColorStyle.whiteColor,
               waterColor: ColorStyle.lightPrimaryColor,
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             CustomRoundedButton(
               "",
               () => _getCropDetails(),
@@ -801,6 +836,9 @@ class _CropDetailScreenState extends State<CropDetailScreen> {
               borderColor: ColorStyle.whiteColor,
               waterColor: ColorStyle.lightPrimaryColor,
             ),
+            _buildDetailsCellWidget(
+                "Last refreshed", DateFormat('hh:mm a').format(lastRefreshed),
+                alignEnd: true)
           ],
         )
       ],

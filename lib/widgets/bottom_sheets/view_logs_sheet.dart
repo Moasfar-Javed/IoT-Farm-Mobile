@@ -116,9 +116,9 @@ class _ViewLogsSheetState extends State<ViewLogsSheet> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
+                                const Text(
                                   "Average",
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w400,
                                       color: ColorStyle.whiteColor),
@@ -148,9 +148,9 @@ class _ViewLogsSheetState extends State<ViewLogsSheet> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
+                                    const Text(
                                       "Status",
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontSize: 10,
                                           fontWeight: FontWeight.w400,
                                           color: ColorStyle.whiteColor),
@@ -165,7 +165,7 @@ class _ViewLogsSheetState extends State<ViewLogsSheet> {
                                   ],
                                 ),
                               ),
-                              SizedBox(width: 10),
+                              const SizedBox(width: 10),
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                     vertical: 7, horizontal: 15),
@@ -176,9 +176,9 @@ class _ViewLogsSheetState extends State<ViewLogsSheet> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
+                                    const Text(
                                       "Average",
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontSize: 10,
                                           fontWeight: FontWeight.w400,
                                           color: ColorStyle.whiteColor),
@@ -199,17 +199,29 @@ class _ViewLogsSheetState extends State<ViewLogsSheet> {
                       height: 20,
                     ),
                     Expanded(
-                        child: Scrollbar(
-                      thumbVisibility: true,
-                      child: ListView.builder(
-                        itemCount: forReadings
-                            ? readings!.length
-                            : irrigations!.length,
-                        itemBuilder: (context, index) => forReadings
-                            ? _buildReadingWidget(index)
-                            : _buildIrrigationWidget(index),
-                      ),
-                    ))
+                        child: (forReadings
+                                ? readings!.isEmpty
+                                : irrigations!.isEmpty)
+                            ? const Center(
+                                child: Text(
+                                  "No logs to show yet...",
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: ColorStyle.secondaryPrimaryColor),
+                                ),
+                              )
+                            : Scrollbar(
+                                thumbVisibility: true,
+                                child: ListView.builder(
+                                  itemCount: forReadings
+                                      ? readings!.length
+                                      : irrigations!.length,
+                                  itemBuilder: (context, index) => forReadings
+                                      ? _buildReadingWidget(index)
+                                      : _buildIrrigationWidget(index),
+                                ),
+                              ))
                   ],
                 ),
               ),
@@ -259,10 +271,10 @@ class _ViewLogsSheetState extends State<ViewLogsSheet> {
   _buildReadingWidget(int index) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-      margin: EdgeInsets.only(bottom: 15),
+      margin: const EdgeInsets.only(bottom: 15),
       decoration: BoxDecoration(
         color: ColorStyle.whiteColor,
-        border: Border(
+        border: const Border(
           bottom: BorderSide(
             color: ColorStyle.lightPrimaryColor,
           ),
@@ -293,7 +305,7 @@ class _ViewLogsSheetState extends State<ViewLogsSheet> {
   _buildIrrigationWidget(int index) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-      margin: EdgeInsets.only(bottom: 15),
+      margin: const EdgeInsets.only(bottom: 15),
       decoration: BoxDecoration(
         color: ColorStyle.whiteColor,
         border: Border.all(

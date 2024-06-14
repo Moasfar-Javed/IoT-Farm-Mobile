@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:convert';
 
 import 'package:farm/keys/api_keys.dart';
+import 'package:farm/models/api/analytic/response/analytics_response.dart';
 import 'package:farm/models/api/base/base_response.dart';
 import 'package:farm/models/api/crop/add/add_crop_response.dart';
 import 'package:farm/models/api/crop/detail/crop_detail_response.dart';
@@ -209,6 +210,31 @@ class CropService {
         var responseBody = json.decode(response.body);
         final CropTypesResponse apiResponse =
             CropTypesResponse.fromJson(responseBody);
+        return BaseResponse(apiResponse, null);
+      } else {
+        return BaseResponse(null, response.body);
+      }
+    } catch (ex) {
+      return BaseResponse(null, ex.toString());
+    }
+  }
+
+  Future<BaseResponse> getAnalytics(
+      bool forIrrigation, String cropName, String filter) async {
+    try {
+      var url = Uri.parse(forIrrigation
+          ? "${ApiKeys.getIrrigationsAnalytics}?name=$cropName&filter=$filter"
+          : "${ApiKeys.getReadingsAnalytics}?name=$cropName&filter=$filter");
+
+      http.Response response = await http.get(url, headers: {
+        "Authorization": "Bearer ${PrefUtil().getUserToken}",
+        // "content-type": "application/json"
+      });
+
+      if (response.statusCode == 200) {
+        var responseBody = json.decode(response.body);
+        final AnalyticsResponse apiResponse =
+            AnalyticsResponse.fromJson(responseBody);
         return BaseResponse(apiResponse, null);
       } else {
         return BaseResponse(null, response.body);
