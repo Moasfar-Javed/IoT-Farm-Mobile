@@ -59,7 +59,9 @@ class _SplashScreenState extends State<SplashScreen> {
           Navigator.of(context)
               .pushNamedAndRemoveUntil(homeRoute, (e) => false);
         } else {
-          ToastUtil.showToast(userResponse.message ?? "");
+          ToastUtil.showToast("Session expired");
+          Navigator.of(context)
+              .pushNamedAndRemoveUntil(signinRoute, (e) => false);
         }
       } else {
         ToastUtil.showToast(value.error ?? "");

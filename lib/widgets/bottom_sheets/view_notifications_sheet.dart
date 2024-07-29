@@ -116,6 +116,7 @@ class _ViewNotificationsSheetState extends State<ViewNotificationsSheet> {
                           : Scrollbar(
                               thumbVisibility: true,
                               child: ListView.builder(
+                                reverse: true,
                                 itemCount: notifications.length,
                                 itemBuilder: (context, index) =>
                                     _buildNotificationWidget(index),
